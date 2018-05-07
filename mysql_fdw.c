@@ -80,6 +80,12 @@
 
 #define DEFAULTE_NUM_ROWS    1000
 
+/*
+ * In PG 9.5.1 the number will be 90501,
+ * our version is 2.4.0 so number will be 20400
+ */
+#define CODE_VERSION   20400
+
 PG_MODULE_MAGIC;
 
 
@@ -102,6 +108,7 @@ bool mysql_load_library(void);
 static void mysql_fdw_exit(int code, Datum arg);
 
 PG_FUNCTION_INFO_V1(mysql_fdw_handler);
+PG_FUNCTION_INFO_V1(mysql_fdw_version);
 
 /*
  * FDW callback routines
@@ -437,7 +444,6 @@ mysqlBeginForeignScan(ForeignScanState *node, int eflags)
 		_mysql_query(festate->conn, timeout);
 	}
 
-	_mysql_query(festate->conn, "SET time_zone = '+00:00'");
 	_mysql_query(festate->conn, "SET sql_mode='ANSI_QUOTES'");
 
 
@@ -1490,7 +1496,6 @@ mysqlExecForeignInsert(EState *estate,
 
 	mysql_bind_buffer = (MYSQL_BIND*) palloc0(sizeof(MYSQL_BIND) * n_params);
 
-	_mysql_query(fmstate->conn, "SET time_zone = '+00:00'");
 	_mysql_query(fmstate->conn, "SET sql_mode='ANSI_QUOTES'");
 
 	foreach(lc, fmstate->retrieved_attrs)
@@ -2200,3 +2205,8 @@ create_cursor(ForeignScanState *node)
 	}
 }
 
+Datum
+mysql_fdw_version(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(CODE_VERSION);
+}
